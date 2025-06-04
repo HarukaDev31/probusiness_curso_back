@@ -17,8 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::get('/getPaises', 'App\Http\Controllers\PaisController@getPaises');
-Route::get('/getDepartamentos', 'App\Http\Controllers\PaisController@getDepartamentos');
-Route::post('/getProvincias', 'App\Http\Controllers\PaisController@getProvincias');
-Route::post('/getDistritos', 'App\Http\Controllers\PaisController@getDistritos');
-Route::post('/crearUsuario', 'App\Http\Controllers\UsuarioController@crearUsuario');
+
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/getPaises', 'App\Http\Controllers\PaisController@getPaises');
+    Route::get('/getDepartamentos', 'App\Http\Controllers\PaisController@getDepartamentos');
+    Route::post('/getProvincias', 'App\Http\Controllers\PaisController@getProvincias');
+    Route::post('/getDistritos', 'App\Http\Controllers\PaisController@getDistritos');
+    Route::post('/crearUsuario', 'App\Http\Controllers\UsuarioController@crearUsuario');
+});

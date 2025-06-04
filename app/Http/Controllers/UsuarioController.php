@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
 
 class UsuarioController extends Controller
 {
@@ -13,7 +14,8 @@ class UsuarioController extends Controller
 
     public function crearUsuario(Request $data)
     {
-        return DB::transaction(function () use ($data) {
+       try{
+         DB::transaction(function () use ($data) {
             // Mapeo de datos del nuevo formato
             $email = trim($data['email']);
             $fullName = trim($data['fullName']);
@@ -87,6 +89,8 @@ class UsuarioController extends Controller
                     'Fe_Nacimiento' => $birthDate,
                     'Nu_Como_Entero_Empresa' => $referralSource,
                     'No_Otros_Como_Entero_Empresa' => ($data['referralSource'] === 'other') ? 'Otros' : null,
+                    'Txt_Rubro_Importacion' => 'Importación',
+                    'Txt_Perfil_Compra' => 'Curso',
                     'Fe_Registro' => now(),
                 ];
 
@@ -118,16 +122,16 @@ class UsuarioController extends Controller
                     'ID_Empresa' => 1,
                     'ID_Organizacion' => 1,
                     'ID_Grupo' => 1205,
-                    'No_Usuario' =>  $this->generateUsername($email),
+                    'No_Usuario' =>  $email,
                     'No_Nombres_Apellidos' => $fullName,
-                    'No_Password' => encrypt($password), // o usar Hash::make($password) si prefieres
+                    'No_Password' => Crypt::encryptString($password),
                     'Txt_Email' => $email,
                     'No_IP' => request()->ip(),
                     'Nu_Estado' => 1,
                     'ID_Entidad' => $ID_Entidad,
                     'Nu_Celular' => $phone,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'Fe_Creacion' => now(),
+                    'Nu_Codigo_Pais' => $countryCode,
                 ];
 
                 $ID_Usuario = DB::table('usuario')->insertGetId($userData);
@@ -138,8 +142,7 @@ class UsuarioController extends Controller
                     'ID_Organizacion' => 1,
                     'ID_Grupo' => 1205,
                     'ID_Usuario' => $ID_Usuario,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    
                 ];
 
                 DB::table('grupo_usuario')->insert($groupUserData);
@@ -174,6 +177,18 @@ class UsuarioController extends Controller
                 ]
             ];
         });
+        return [
+            'status' => 'success',
+            'message' => 'Usuario registrado, valida tu pago',
+        ];
+       }catch (\Exception $e) {
+            // Manejo de errores
+            return [
+                'status' => 'error',
+                'message' => '¡Oops! Algo salió mal. Inténtalo mas tarde',
+                'error' => $e->getMessage() // Solo para desarrollo, remover en producción
+            ];
+        }
     }
 
     // Función auxiliar para manejar errores de transacción
